@@ -10,14 +10,8 @@ const {
   GatewayIntentBits,
   REST,
   Routes,
-  EmbedBuilder,
+  EmbedBuilder
 } = require('discord.js')
-
-// const {
-//   createAudioPlayer,
-//   joinVoiceChannel,
-//   createAudioResource,
-// } = require('@discordjs/voice')
 
 const Voice = require('@discordjs/voice')
 
@@ -25,8 +19,8 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.GuildVoiceStates,
-  ],
+    GatewayIntentBits.GuildVoiceStates
+  ]
 })
 
 const player = Voice.createAudioPlayer()
@@ -34,7 +28,7 @@ const player = Voice.createAudioPlayer()
 const commands = [
   {
     name: 'ping',
-    description: 'Replies with Pong!',
+    description: 'Replies with Pong!'
   },
   {
     name: 'yt',
@@ -44,9 +38,9 @@ const commands = [
         name: 'url',
         description: 'YouTube url',
         type: 3,
-        required: true,
-      },
-    ],
+        required: true
+      }
+    ]
   },
   {
     name: 'play',
@@ -56,9 +50,9 @@ const commands = [
         name: 'url',
         description: 'YouTube url',
         type: 3,
-        required: true,
-      },
-    ],
+        required: true
+      }
+    ]
   },
   {
     name: 'music',
@@ -68,9 +62,9 @@ const commands = [
         name: 'url',
         description: 'YouTube url',
         type: 3,
-        required: true,
-      },
-    ],
+        required: true
+      }
+    ]
   },
   {
     name: 'queue',
@@ -80,9 +74,9 @@ const commands = [
         name: 'url',
         description: 'YouTube url',
         type: 3,
-        required: true,
-      },
-    ],
+        required: true
+      }
+    ]
   },
   {
     name: 'melody',
@@ -92,14 +86,14 @@ const commands = [
         name: 'url',
         description: 'YouTube url',
         type: 3,
-        required: true,
-      },
-    ],
+        required: true
+      }
+    ]
   },
   {
     name: 'stop',
-    description: 'Stop play music from YouTube!',
-  },
+    description: 'Stop play music from YouTube!'
+  }
 ]
 
 const rest = new REST({ version: '10' }).setToken(config.discordBotToken)
@@ -109,7 +103,7 @@ const rest = new REST({ version: '10' }).setToken(config.discordBotToken)
     console.log('Started refreshing application (/) commands.')
 
     await rest.put(Routes.applicationCommands(config.discordClientId), {
-      body: commands,
+      body: commands
     })
 
     console.log('Successfully reloaded application (/) commands.')
@@ -156,7 +150,7 @@ async function goMelody(interaction) {
   const melodyStream = ytdl(url, {
     filter: 'audioonly',
     quality: 'highestaudio',
-    highWaterMark: 1 << 25,
+    highWaterMark: 1 << 25
   })
 
   console.log('ffmpeg')
@@ -166,24 +160,23 @@ async function goMelody(interaction) {
 
   console.log('createAudioResource')
   const resource = Voice.createAudioResource(ffmpegMeloding, {
-    inlineVolume: true,
+    inlineVolume: true
   })
   resource.volume.setVolume(0.15)
 
   const connection = Voice.joinVoiceChannel({
     channelId: interaction.member.voice.channel.id,
     guildId: interaction.member.voice.channel.guild.id,
-    adapterCreator: interaction.member.voice.channel.guild.voiceAdapterCreator,
+    adapterCreator: interaction.member.voice.channel.guild.voiceAdapterCreator
   })
 
   player.play(resource)
   connection.subscribe(player)
 
-  let embed = new EmbedBuilder()
-  embed.setDescription(`**${url}**`)
+  let embed = new EmbedBuilder().setDescription(`**${url}**`)
 
   await interaction.reply({
-    embeds: [embed],
+    embeds: [embed]
   })
 }
 
@@ -195,10 +188,9 @@ async function stopMelody(interaction) {
   player.stop()
   Voice.getVoiceConnection(interaction.member.guild.id).disconnect()
 
-  let embed = new EmbedBuilder()
-  embed.setDescription(`Проигрывание остановлено`)
+  const embed = new EmbedBuilder().setDescription(`Проигрывание остановлено`)
 
   await interaction.reply({
-    embeds: [embed],
+    embeds: [embed]
   })
 }
