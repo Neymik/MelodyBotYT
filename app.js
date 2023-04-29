@@ -1,146 +1,157 @@
-'use strict';
+'use strict'
 
-const config = require('./config');
+const config = require('./config')
 
-const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
+const ytdl = require('ytdl-core')
+const ffmpeg = require('fluent-ffmpeg')
 
-const { Client, GatewayIntentBits, REST, Routes, EmbedBuilder } = require('discord.js');
-const { createAudioPlayer, joinVoiceChannel, createAudioResource } = require('@discordjs/voice');
+const {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  EmbedBuilder
+} = require('discord.js')
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] });
-const player = createAudioPlayer();
+const Voice = require('@discordjs/voice')
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates
+  ]
+})
+
+const player = Voice.createAudioPlayer()
 
 const commands = [
   {
     name: 'ping',
-    description: 'Replies with Pong!',
+    description: 'Replies with Pong!'
   },
   {
     name: 'yt',
     description: 'Play music from YouTube!',
     options: [
       {
-        name: "url",
-        description: "YouTube url",
+        name: 'url',
+        description: 'YouTube url',
         type: 3,
         required: true
       }
-    ],
+    ]
   },
   {
     name: 'play',
     description: 'Play music from YouTube!',
     options: [
       {
-        name: "url",
-        description: "YouTube url",
+        name: 'url',
+        description: 'YouTube url',
         type: 3,
         required: true
       }
-    ],
+    ]
   },
   {
     name: 'music',
     description: 'Play music from YouTube!',
     options: [
       {
-        name: "url",
-        description: "YouTube url",
+        name: 'url',
+        description: 'YouTube url',
         type: 3,
         required: true
       }
-    ],
+    ]
   },
   {
     name: 'queue',
     description: 'Play music from YouTube!',
     options: [
       {
-        name: "url",
-        description: "YouTube url",
+        name: 'url',
+        description: 'YouTube url',
         type: 3,
         required: true
       }
-    ],
+    ]
   },
   {
     name: 'melody',
     description: 'Play music from YouTube!',
     options: [
       {
-        name: "url",
-        description: "YouTube url",
+        name: 'url',
+        description: 'YouTube url',
         type: 3,
         required: true
       }
-    ],
+    ]
   },
   {
     name: 'stop',
-    description: 'Stop play music from YouTube!',
-  },
-];
-
-const rest = new REST({ version: '10' }).setToken(config.discordBotToken);
-
-(async () => {
-  try {
-    console.log('Started refreshing application (/) commands.');
-
-    await rest.put(Routes.applicationCommands(config.discordClientId), { body: commands });
-
-    console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error(error);
+    description: 'Stop play music from YouTube!'
   }
-})();
+]
 
+const rest = new REST({ version: '10' }).setToken(config.discordBotToken)
+
+;(async () => {
+  try {
+    console.log('Started refreshing application (/) commands.')
+
+    await rest.put(Routes.applicationCommands(config.discordClientId), {
+      body: commands
+    })
+
+    console.log('Successfully reloaded application (/) commands.')
+  } catch (error) {
+    console.error(error)
+  }
+})()
 
 client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
-});
+  console.log(`Logged in as ${client.user.tag}!`)
+})
 
-client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return
 
   if (interaction.commandName === 'ping') {
-    await interaction.reply('Pong!');
+    await interaction.reply('Pong!')
   }
 
   if (interaction.commandName === 'stop') {
-    player.stop();
+    await stopMelody(interaction)
   }
 
-  if (interaction.commandName === 'yt' ||
-      interaction.commandName === 'play' ||
-      interaction.commandName === 'music' ||
-      interaction.commandName === 'queue'
-    ) {
-
-    await goMelody(interaction);
-
+  if (
+    interaction.commandName === 'yt' ||
+    interaction.commandName === 'play' ||
+    interaction.commandName === 'music' ||
+    interaction.commandName === 'queue'
+  ) {
+    await goMelody(interaction)
   }
+})
 
-});
-
-client.login(config.discordBotToken);
-
+client.login(config.discordBotToken)
 
 async function goMelody(interaction) {
-
   if (!interaction.member.voice.channel) {
-    return interaction.reply("Лева попа, зайди в канал");
+    return interaction.reply('Лева попа, зайди в канал')
   }
 
-  const url = interaction.options.getString("url")
+  const url = interaction.options.getString('url')
 
   console.log('melodyStream')
   const melodyStream = ytdl(url, {
     filter: 'audioonly',
     quality: 'highestaudio',
     highWaterMark: 1 << 25
-  });
+  })
 
   console.log('ffmpeg')
   const ffmpegMeloding = ffmpeg(melodyStream)
@@ -148,26 +159,38 @@ async function goMelody(interaction) {
     .toFormat('mp3')
 
   console.log('createAudioResource')
-  const resource = createAudioResource(ffmpegMeloding, {
+  const resource = Voice.createAudioResource(ffmpegMeloding, {
     inlineVolume: true
-  });
-  resource.volume.setVolume(0.15);
+  })
+  resource.volume.setVolume(0.15)
 
-  const connection = joinVoiceChannel({
+  const connection = Voice.joinVoiceChannel({
     channelId: interaction.member.voice.channel.id,
     guildId: interaction.member.voice.channel.guild.id,
-    adapterCreator: interaction.member.voice.channel.guild.voiceAdapterCreator,
-  });
+    adapterCreator: interaction.member.voice.channel.guild.voiceAdapterCreator
+  })
 
-  player.play(resource);
+  player.play(resource)
   connection.subscribe(player)
 
-  let embed = new EmbedBuilder()
-  embed
-    .setDescription(`**${url}**`)
+  let embed = new EmbedBuilder().setDescription(`**${url}**`)
 
   await interaction.reply({
-      embeds: [embed]
+    embeds: [embed]
   })
-  
+}
+
+async function stopMelody(interaction) {
+  if (!interaction.member.voice.channel) {
+    return interaction.reply('Лева попа, зайди в канал')
+  }
+
+  player.stop()
+  Voice.getVoiceConnection(interaction.member.guild.id).disconnect()
+
+  const embed = new EmbedBuilder().setDescription(`Проигрывание остановлено`)
+
+  await interaction.reply({
+    embeds: [embed]
+  })
 }
